@@ -3,10 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts';
 
 const fetchFundInsights = async () => {
-  // Replace with actual API call
-  const response = await fetch('https://api.lidonation.com/v1/catalysts/fund-insights');
+  const response = await fetch('https://api.lidonation.com/v1/catalysts/funds');
   if (!response.ok) {
-    throw new Error('Network response was not ok');
+    throw new Error('Failed to fetch fund insights');
   }
   return response.json();
 };
@@ -14,13 +13,18 @@ const fetchFundInsights = async () => {
 const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042'];
 
 const FundInsights = () => {
-  const { data: fundInsights, isLoading, error } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: ['fundInsights'],
     queryFn: fetchFundInsights,
   });
 
-  if (isLoading) return <div>Loading fund insights...</div>;
-  if (error) return <div>Error fetching fund insights: {error.message}</div>;
+  if (isLoading) return <div className="text-center">Loading fund insights...</div>;
+  if (error) return <div className="text-center text-red-500">Error: {error.message}</div>;
+
+  const chartData = data?.data.map(fund => ({
+    name: `Fund ${fund.id}`,
+    value: fund.total_budget,
+  })) || [];
 
   return (
     <div>
@@ -28,7 +32,7 @@ const FundInsights = () => {
       <ResponsiveContainer width="100%" height={300}>
         <PieChart>
           <Pie
-            data={fundInsights}
+            data={chartData}
             cx="50%"
             cy="50%"
             labelLine={false}
@@ -36,7 +40,7 @@ const FundInsights = () => {
             fill="#8884d8"
             dataKey="value"
           >
-            {fundInsights.map((entry, index) => (
+            {chartData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
             ))}
           </Pie>
